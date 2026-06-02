@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sales Analytics Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0a0a0f;
+    --surface:   #111118;
+    --border:    #1e1e2e;
+    --accent:    #00d4aa;
+    --accent-dim:#00d4aa22;
+    --text:      #e8e8f0;
+    --muted:     #5a5a7a;
+    --danger:    #ff4d6d;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+  }
+
+  /* Header */
+  header {
+    padding: 24px 40px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  header h1 {
+    font-size: 1.2rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  header span {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  /* Main layout */
+  main {
+    padding: 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+
+  /* KPI Cards */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 32px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .kpi-card:hover { border-color: var(--accent); }
+
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent);
+    opacity: 0.6;
+  }
+
+  .kpi-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  .kpi-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2rem;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  .kpi-value.loading {
+    color: var(--muted);
+    font-size: 1rem;
+    animation: pulse 1.5s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.3; }
+  }
+
+  /* Charts */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+  }
+
+  .chart-card h2 {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 24px;
+  }
+
+  canvas { max-height: 260px; }
+
+  /* Top Products Table */
+  .table-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+  }
+
+  .table-card h2 {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 24px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  thead th {
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-align: left;
+    padding: 0 16px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  tbody tr {
+    transition: background 0.15s;
+  }
+
+  tbody tr:hover { background: var(--accent-dim); }
+
+  tbody td {
+    padding: 14px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  tbody tr:last-child td { border-bottom: none; }
+
+  td.rank {
+    color: var(--accent);
+    font-weight: 500;
+    width: 40px;
+  }
+
+  td.product-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.9rem;
+    color: var(--text);
+  }
+
+  td.revenue { color: var(--accent); }
+
+  /* Bar fill */
+  .bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .bar-bg {
+    flex: 1;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 1s ease;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Sales Analytics</h1>
+  <span id="live-time"></span>
+</header>
+
+<main>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">Total Revenue</div>
+      <div class="kpi-value loading" id="kpi-revenue">Loading...</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Total Orders</div>
+      <div class="kpi-value loading" id="kpi-orders">Loading...</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Total Customers</div>
+      <div class="kpi-value loading" id="kpi-customers">Loading...</div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-grid">
+    <div class="chart-card">
+      <h2>Top Products — Revenue</h2>
+      <canvas id="barChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <h2>Top Products — Units Sold</h2>
+      <canvas id="doughnutChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-card">
+    <h2>Top 5 Products Breakdown</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Product</th>
+          <th>Units Sold</th>
+          <th>Revenue (SAR)</th>
+          <th>Share</th>
+        </tr>
+      </thead>
+      <tbody id="products-table">
+        <tr><td colspan="5" style="color:var(--muted);padding:20px 16px">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</main>
+
+<script>
+  // Live clock
+  function updateClock() {
+    document.getElementById('live-time').textContent =
+      new Date().toLocaleString('en-US', { hour12: false });
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // Format numbers
+  const fmt = n => Number(n).toLocaleString('en-US', { minimumFractionDigits: 0 });
+  const fmtSAR = n => 'SAR ' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2 });
+
+  // Fetch KPIs
+  fetch('/api/total-sales')
+    .then(r => r.json())
+    .then(data => {
+      document.getElementById('kpi-revenue').textContent   = fmtSAR(data.total_revenue);
+      document.getElementById('kpi-orders').textContent    = fmt(data.total_orders);
+      document.getElementById('kpi-customers').textContent = fmt(data.total_customers);
+
+      ['kpi-revenue','kpi-orders','kpi-customers'].forEach(id => {
+        document.getElementById(id).classList.remove('loading');
+      });
+    });
+
+  // Fetch Top Products
+  fetch('/api/top-products')
+    .then(r => r.json())
+    .then(products => {
+      const labels   = products.map(p => p.product_name.split(' ').slice(0,2).join(' '));
+      const revenues = products.map(p => Number(p.revenue));
+      const units    = products.map(p => Number(p.units_sold));
+      const maxRev   = Math.max(...revenues);
+
+      const ACCENT  = '#00d4aa';
+      const SURFACE = '#1e1e2e';
+
+      const chartDefaults = {
+        plugins: { legend: { display: false } },
+        scales: {}
+      };
+
+      // Bar Chart
+      new Chart(document.getElementById('barChart'), {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            data: revenues,
+            backgroundColor: ACCENT + '33',
+            borderColor: ACCENT,
+            borderWidth: 1,
+            borderRadius: 4
+          }]
+        },
+        options: {
+          ...chartDefaults,
+          scales: {
+            x: { ticks: { color: '#5a5a7a', font: { size: 10 } }, grid: { color: SURFACE } },
+            y: { ticks: { color: '#5a5a7a', font: { size: 10 } }, grid: { color: SURFACE } }
+          }
+        }
+      });
+
+      // Doughnut Chart
+      new Chart(document.getElementById('doughnutChart'), {
+        type: 'doughnut',
+        data: {
+          labels,
+          datasets: [{
+            data: units,
+            backgroundColor: [
+              '#00d4aa33','#00d4aa55','#00d4aa77','#00d4aa99','#00d4aabb'
+            ],
+            borderColor: ACCENT,
+            borderWidth: 1
+          }]
+        },
+        options: {
+          plugins: {
+            legend: {
+              display: true,
+              position: 'bottom',
+              labels: { color: '#5a5a7a', font: { size: 10 }, boxWidth: 10 }
+            }
+          }
+        }
+      });
+
+      // Table
+      const tbody = document.getElementById('products-table');
+      tbody.innerHTML = '';
+      products.forEach((p, i) => {
+        const pct = ((p.revenue / maxRev) * 100).toFixed(0);
+        tbody.innerHTML += `
+          <tr>
+            <td class="rank">${i + 1}</td>
+            <td class="product-name">${p.product_name}</td>
+            <td>${fmt(p.units_sold)}</td>
+            <td class="revenue">${fmtSAR(p.revenue)}</td>
+            <td>
+              <div class="bar-wrap">
+                <div class="bar-bg">
+                  <div class="bar-fill" style="width:${pct}%"></div>
+                </div>
+                <span style="font-size:0.75rem;color:var(--muted);width:35px">${pct}%</span>
+              </div>
+            </td>
+          </tr>`;
+      });
+    });
+</script>
+
+</body>
+</html>
