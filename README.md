@@ -103,5 +103,8 @@ The database will be created and populated with sample data automatically on fir
 
 ## Author
 
-Fadi - IT Student, Semester 4  
-GitHub: [unreallfadi](https://github.com/unreallfadi)
+**Fadi**
+SQL Developer | Database Design | Web Design
+
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue)](https://linkedin.com)
+[![GitHub](https://img.shields.io/badge/GitHub-Follow-black)](https://github.com)
