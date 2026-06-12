@@ -263,6 +263,12 @@
     </div>
   </div>
 
+  <!-- Monthly Revenue Trend -->
+  <div class="chart-card">
+    <h2>Monthly Revenue Trend</h2>
+    <canvas id="lineChart"></canvas>
+  </div>
+
   <!-- Table -->
   <div class="table-card">
     <h2>Top 5 Products Breakdown</h2>
@@ -394,6 +400,41 @@
               </div>
             </td>
           </tr>`;
+      });
+    });
+
+  // Fetch Monthly Revenue Trend
+  fetch('/api/monthly-revenue')
+    .then(r => r.json())
+    .then(rows => {
+      const ACCENT  = '#00d4aa';
+      const SURFACE = '#1e1e2e';
+
+      const labels  = rows.map(r => r.month);
+      const revenue = rows.map(r => Number(r.revenue));
+
+      new Chart(document.getElementById('lineChart'), {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            data: revenue,
+            borderColor: ACCENT,
+            backgroundColor: ACCENT + '22',
+            borderWidth: 2,
+            tension: 0.3,
+            fill: true,
+            pointRadius: 3,
+            pointBackgroundColor: ACCENT
+          }]
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { color: '#5a5a7a', font: { size: 10 } }, grid: { color: SURFACE } },
+            y: { ticks: { color: '#5a5a7a', font: { size: 10 } }, grid: { color: SURFACE } }
+          }
+        }
       });
     });
 </script>
