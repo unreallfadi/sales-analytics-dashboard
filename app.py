@@ -64,26 +64,26 @@ def init_db():
                 ('Electronics'), ('Clothing'), ('Food & Beverages'), ('Books'), ('Sports');
 
             INSERT INTO products (product_name, category_id, unit_price, stock) VALUES
-                ('Samsung Galaxy S24',     1, 3200.00,  50),
-                ('iPhone 15',             1, 4500.00,  30),
-                ('Sony Headphones WH1000',1,  950.00,  80),
-                ('Nike Running Shoes',    5,  450.00, 120),
-                ('Adidas T-Shirt',        2,  120.00, 200),
-                ('Levi Jeans',            2,  280.00, 150),
-                ('Arabic Coffee Pack',    3,   85.00, 500),
-                ('Programming with Python',4, 195.00,  90),
-                ('Clean Code Book',       4,  220.00,  75),
-                ('Gym Gloves Pro',        5,   65.00, 300);
+                ('Samsung Galaxy S24',    1, 3200.00, 50),
+                ('iPhone 15',            1, 4500.00, 30),
+                ('Sony Headphones WH1000',1,  950.00, 80),
+                ('Nike Running Shoes',   5,  450.00,120),
+                ('Adidas T-Shirt',       2,  120.00,200),
+                ('Levi Jeans',           2,  280.00,150),
+                ('Arabic Coffee Pack',   3,   85.00,500),
+                ('Programming with Python',4, 195.00, 90),
+                ('Clean Code Book',      4,  220.00, 75),
+                ('Gym Gloves Pro',       5,   65.00,300);
 
             INSERT INTO customers (full_name, email, city) VALUES
-                ('Ahmed Al-Rashid',   'ahmed@email.com',   'Riyadh'),
-                ('Sara Al-Otaibi',    'sara@email.com',    'Jeddah'),
-                ('Khalid Al-Zahrani', 'khalid@email.com',  'Dammam'),
-                ('Fatima Al-Ghamdi',  'fatima@email.com',  'Riyadh'),
-                ('Omar Al-Harbi',     'omar@email.com',    'Mecca'),
-                ('Nora Al-Qahtani',   'nora@email.com',    'Jeddah'),
-                ('Tariq Al-Shammari', 'tariq@email.com',   'Riyadh'),
-                ('Mona Al-Dosari',    'mona@email.com',    'Dammam');
+                ('Ahmed Al-Rashid',  'ahmed@email.com',  'Riyadh'),
+                ('Sara Al-Otaibi',   'sara@email.com',   'Jeddah'),
+                ('Khalid Al-Zahrani','khalid@email.com', 'Dammam'),
+                ('Fatima Al-Ghamdi', 'fatima@email.com', 'Riyadh'),
+                ('Omar Al-Harbi',    'omar@email.com',   'Mecca'),
+                ('Nora Al-Qahtani',  'nora@email.com',   'Jeddah'),
+                ('Tariq Al-Shammari','tariq@email.com',  'Riyadh'),
+                ('Mona Al-Dosari',   'mona@email.com',   'Dammam');
 
             INSERT INTO orders (customer_id, order_date, status) VALUES
                 (1,'2024-01-05','Completed'),(2,'2024-01-12','Completed'),
@@ -125,75 +125,63 @@ def index():
 
 @app.route('/api/total-sales')
 def total_sales():
-    try:
-        conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute("""
-            SELECT
-                COUNT(DISTINCT o.order_id)       AS total_orders,
-                SUM(oi.quantity * oi.unit_price) AS total_revenue,
-                COUNT(DISTINCT o.customer_id)    AS total_customers
-            FROM orders o
-            JOIN order_items oi ON o.order_id = oi.order_id
-            WHERE o.status = 'Completed'
-        """)
-        row = cursor.fetchone()
-        conn.close()
-        return jsonify(dict(row))
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT
+            COUNT(DISTINCT o.order_id)    AS total_orders,
+            SUM(oi.quantity * oi.unit_price) AS total_revenue,
+            COUNT(DISTINCT o.customer_id) AS total_customers
+        FROM orders o
+        JOIN order_items oi ON o.order_id = oi.order_id
+        WHERE o.status = 'Completed'
+    """)
+    row = cursor.fetchone()
+    conn.close()
+    return jsonify(dict(row))
 
 
 @app.route('/api/top-products')
 def top_products():
-    try:
-        conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute("""
-            SELECT
-                p.product_name,
-                SUM(oi.quantity)                 AS units_sold,
-                SUM(oi.quantity * oi.unit_price) AS revenue
-            FROM order_items oi
-            JOIN products p ON oi.product_id = p.product_id
-            JOIN orders   o ON oi.order_id   = o.order_id
-            WHERE o.status = 'Completed'
-            GROUP BY p.product_id, p.product_name
-            ORDER BY revenue DESC
-            LIMIT 5
-        """)
-        rows = [dict(r) for r in cursor.fetchall()]
-        conn.close()
-        return jsonify(rows)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT
+            p.product_name,
+            SUM(oi.quantity)                 AS units_sold,
+            SUM(oi.quantity * oi.unit_price) AS revenue
+        FROM order_items oi
+        JOIN products p ON oi.product_id = p.product_id
+        JOIN orders o   ON oi.order_id   = o.order_id
+        WHERE o.status = 'Completed'
+        GROUP BY p.product_id, p.product_name
+        ORDER BY revenue DESC
+        LIMIT 5
+    """)
+    rows = [dict(r) for r in cursor.fetchall()]
+    conn.close()
+    return jsonify(rows)
 
 
 @app.route('/api/monthly-revenue')
 def monthly_revenue():
-    try:
-        conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute("""
-            SELECT
-                strftime('%Y-%m', o.order_date)  AS month,
-                SUM(oi.quantity * oi.unit_price) AS revenue
-            FROM orders o
-            JOIN order_items oi ON o.order_id = oi.order_id
-            WHERE o.status = 'Completed'
-            GROUP BY month
-            ORDER BY month
-        """)
-        rows = [dict(r) for r in cursor.fetchall()]
-        conn.close()
-        return jsonify(rows)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT
+            strftime('%Y-%m', o.order_date)  AS month,
+            SUM(oi.quantity * oi.unit_price) AS revenue
+        FROM orders o
+        JOIN order_items oi ON o.order_id = oi.order_id
+        WHERE o.status = 'Completed'
+        GROUP BY month
+        ORDER BY month
+    """)
+    rows = [dict(r) for r in cursor.fetchall()]
+    conn.close()
+    return jsonify(rows)
 
-
-# Ensures DB is initialized even when using a WSGI server like gunicorn
-with app.app_context():
-    init_db()
 
 if __name__ == '__main__':
-    app.run(debug=False)
+    init_db()
+    app.run(debug=True)
