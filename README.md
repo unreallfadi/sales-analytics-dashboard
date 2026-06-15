@@ -85,12 +85,9 @@ The database is created automatically on first run.
 
 ---
 
-## Author
-
 **Fadi Amir**
 Data Analyst | SQL Developer | Database Design
-GitHub: [unreallfadi](https://github.com/unreallfadi)
-LinkedIn: [fadi-amir-sdn](https://www.linkedin.com/in/fadi-amir-sdn)
-## Author
 
+[![GitHub](https://img.shields.io/badge/GitHub-unreallfadi-181717?style=flat&logo=github)](https://github.com/unreallfadi)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-fadi--amir-0A66C2?style=flat&logo=linkedin)](https://www.linkedin.com/in/unreallfadi)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue)](https://linkedin.com) [![GitHub](https://img.shields.io/badge/Gi
