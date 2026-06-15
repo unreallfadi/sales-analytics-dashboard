@@ -1,8 +1,15 @@
-sales.db
+# SQLite database file
+*.db
+
+# Python cache
 __pycache__/
 *.pyc
 *.pyo
-.env
-.venv/
+
+# Virtual environment
 venv/
-instance/
+.env
+
+# OS files
+.DS_Store
+Thumbs.db
